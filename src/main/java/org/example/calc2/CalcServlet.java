@@ -17,6 +17,13 @@ public class CalcServlet extends HttpServlet {
     private List<Calculation> history = new ArrayList<>();
 
     @Override
+    public void init() throws ServletException {
+        if (getServletContext().getAttribute("calculationHistory") == null) {
+            getServletContext().setAttribute("calculationHistory", new ArrayList<Calculation>());
+        }
+    }
+
+    @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         getServletContext().getRequestDispatcher("/pages/calc.jsp").forward(req, resp);
     }
@@ -57,8 +64,15 @@ public class CalcServlet extends HttpServlet {
 
             if (error == null) {
                 Calculation calc = new Calculation(num1, num2, operation, result);
+
+                List<Calculation> history = (List<Calculation>) getServletContext().getAttribute("calculationHistory");
+                if (history == null) {
+                    history = new ArrayList<>();
+                    getServletContext().setAttribute("calculationHistory", history);
+                }
                 history.add(calc);
-                getServletContext().setAttribute("calculationHistory", history);
+
+                DBManager.saveCalculation(calc);
             }
         } catch (NumberFormatException e) {
             error = "Введите корректные числа!";
